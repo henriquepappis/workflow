@@ -1,0 +1,326 @@
+<!DOCTYPE html>
+<html lang="pt-br">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>WorkFlow | Gestão de Ponto</title>
+    <script src="https://cdn.tailwindcss.com"></script>
+    <link href="https://fonts.googleapis.com/css2?family=Plus+Jakarta+Sans:wght@400;500;600;700&display=swap" rel="stylesheet">
+    <style>
+        body { font-family: 'Plus Jakarta Sans', sans-serif; }
+        .glass-card {
+            background: rgba(255, 255, 255, 0.8);
+            backdrop-filter: blur(10px);
+            border: 1px solid rgba(255, 255, 255, 0.3);
+        }
+        @keyframes fadeInUp {
+            from {
+                opacity: 0;
+                transform: translateY(20px);
+            }
+            to {
+                opacity: 1;
+                transform: translateY(0);
+            }
+        }
+        .animate-fade-in-up {
+            animation: fadeInUp 0.5s ease-out;
+        }
+        .input-error {
+            border-color: #ef4444 !important;
+            background-color: #fef2f2 !important;
+        }
+        .shake {
+            animation: shake 0.5s;
+        }
+        @keyframes shake {
+            0%, 100% { transform: translateX(0); }
+            25% { transform: translateX(-10px); }
+            75% { transform: translateX(10px); }
+        }
+    </style>
+</head>
+<body class="bg-slate-50 text-slate-900 min-h-screen flex items-center justify-center p-4">
+
+    <div class="w-full max-w-md">
+        <div class="text-center mb-8">
+            <h1 class="text-3xl font-extrabold tracking-tight text-slate-900">
+                Work<span class="text-blue-600">Flow</span>
+            </h1>
+            <p class="text-slate-500 text-sm mt-1">Calcule seu expediente com precisão.</p>
+        </div>
+
+        <main class="bg-white rounded-[2.5rem] shadow-2xl shadow-blue-100 p-8 border border-slate-100">
+            
+            <div class="space-y-6">
+                <!-- Mensagem de erro -->
+                <div id="mensagemErro" class="hidden bg-red-50 border border-red-200 text-red-700 px-4 py-3 rounded-2xl text-sm font-medium"></div>
+
+                <div>
+                    <label for="carga" class="block text-[11px] font-bold text-slate-400 uppercase tracking-widest mb-2 ml-1">Carga Horária Desejada</label>
+                    <input type="time" id="carga" value="08:00" aria-label="Carga horária desejada" class="w-full bg-slate-50 border-2 border-slate-50 rounded-2xl p-4 focus:bg-white focus:border-blue-500 focus:ring-2 focus:ring-blue-200 transition-all outline-none text-lg font-medium" required>
+                </div>
+
+                <div class="grid grid-cols-2 gap-4">
+                    <div>
+                        <label for="entrada" class="block text-[11px] font-bold text-slate-400 uppercase tracking-widest mb-2 ml-1">Entrada</label>
+                        <input type="time" id="entrada" value="07:50" aria-label="Horário de entrada" class="w-full bg-slate-50 border-2 border-slate-50 rounded-2xl p-4 focus:bg-white focus:border-blue-500 focus:ring-2 focus:ring-blue-200 transition-all outline-none font-medium" required>
+                    </div>
+                    <div>
+                        <label for="almocoSai" class="block text-[11px] font-bold text-slate-400 uppercase tracking-widest mb-2 ml-1">Saída Almoço</label>
+                        <input type="time" id="almocoSai" value="11:51" aria-label="Horário de saída para almoço" class="w-full bg-slate-50 border-2 border-slate-50 rounded-2xl p-4 focus:bg-white focus:border-blue-500 focus:ring-2 focus:ring-blue-200 transition-all outline-none font-medium" required>
+                    </div>
+                </div>
+
+                <div>
+                    <label for="almocoVolta" class="block text-[11px] font-bold text-slate-400 uppercase tracking-widest mb-2 ml-1">Retorno Almoço</label>
+                    <input type="time" id="almocoVolta" value="12:52" aria-label="Horário de retorno do almoço" class="w-full bg-slate-50 border-2 border-slate-50 rounded-2xl p-4 focus:bg-white focus:border-blue-500 focus:ring-2 focus:ring-blue-200 transition-all outline-none font-medium" required>
+                </div>
+
+                <div class="flex gap-3">
+                    <button id="btnCalcular" type="button" class="flex-1 bg-blue-600 hover:bg-blue-700 text-white font-bold py-5 rounded-2xl transition-all shadow-lg shadow-blue-200 active:scale-[0.97] text-lg focus:outline-none focus:ring-2 focus:ring-blue-500 focus:ring-offset-2">
+                        Calcular Horários
+                    </button>
+                    <button id="btnResetar" type="button" class="px-6 bg-slate-100 hover:bg-slate-200 text-slate-700 font-bold py-5 rounded-2xl transition-all active:scale-[0.97] focus:outline-none focus:ring-2 focus:ring-slate-400 focus:ring-offset-2" aria-label="Resetar formulário">
+                        ↺
+                    </button>
+                </div>
+            </div>
+
+            <div id="resultado" class="hidden mt-8 space-y-4">
+                <div class="h-px bg-slate-100 w-full mb-6"></div>
+                
+                <div class="grid grid-cols-2 gap-4">
+                    <div class="bg-blue-50/50 border border-blue-100 p-4 rounded-2xl">
+                        <span class="block text-[10px] font-bold text-blue-500 uppercase">Trabalhado</span>
+                        <span id="trabalhado" class="text-xl font-bold text-blue-900" aria-live="polite">--:--</span>
+                    </div>
+                    <div class="bg-amber-50/50 border border-amber-100 p-4 rounded-2xl">
+                        <span class="block text-[10px] font-bold text-amber-600 uppercase">Faltam</span>
+                        <span id="falta" class="text-xl font-bold text-amber-900" aria-live="polite">--:--</span>
+                    </div>
+                </div>
+
+                <div class="bg-slate-900 p-6 rounded-[2rem] text-center shadow-xl shadow-slate-200">
+                    <span class="block text-xs font-medium text-slate-400 mb-2 uppercase tracking-tight">Horário de Saída Recomendado</span>
+                    <span id="horaSaida" class="text-5xl font-black text-white tracking-tighter" aria-live="polite">--:--</span>
+                </div>
+            </div>
+        </main>
+
+        <footer class="mt-8 text-center text-slate-400 text-[11px] font-medium uppercase tracking-widest">
+            &copy; 2026 PAPPIS TECNOLOGIA
+        </footer>
+    </div>
+
+    <script>
+        // Utilitários de conversão
+        const toMinutes = (t) => {
+            if (!t) return 0;
+            const [h, m] = t.split(':').map(Number);
+            return h * 60 + m;
+        };
+
+        const toHours = (m) => {
+            if (m < 0) return "00:00";
+            const hh = Math.floor(m / 60);
+            const mm = m % 60;
+            return `${String(hh).padStart(2, '0')}:${String(mm).padStart(2, '0')}`;
+        };
+
+        // Elementos DOM
+        const elementos = {
+            carga: document.getElementById('carga'),
+            entrada: document.getElementById('entrada'),
+            almocoSai: document.getElementById('almocoSai'),
+            almocoVolta: document.getElementById('almocoVolta'),
+            btnCalcular: document.getElementById('btnCalcular'),
+            btnResetar: document.getElementById('btnResetar'),
+            resultado: document.getElementById('resultado'),
+            mensagemErro: document.getElementById('mensagemErro'),
+            trabalhado: document.getElementById('trabalhado'),
+            falta: document.getElementById('falta'),
+            horaSaida: document.getElementById('horaSaida')
+        };
+
+        // Validação de horários
+        function validarHorarios() {
+            const entrada = elementos.entrada.value;
+            const saidaAlmoco = elementos.almocoSai.value;
+            const retornoAlmoco = elementos.almocoVolta.value;
+            const carga = elementos.carga.value;
+
+            // Verificar se todos os campos estão preenchidos
+            if (!entrada || !saidaAlmoco || !retornoAlmoco || !carga) {
+                mostrarErro('Por favor, preencha todos os campos.');
+                return false;
+            }
+
+            const entMin = toMinutes(entrada);
+            const saiAlmMin = toMinutes(saidaAlmoco);
+            const volAlmMin = toMinutes(retornoAlmoco);
+            const cargaMin = toMinutes(carga);
+
+            // Validar ordem lógica dos horários
+            if (saiAlmMin <= entMin) {
+                mostrarErro('A saída para almoço deve ser posterior ao horário de entrada.');
+                return false;
+            }
+
+            if (volAlmMin <= saiAlmMin) {
+                mostrarErro('O retorno do almoço deve ser posterior à saída para almoço.');
+                return false;
+            }
+
+            // Validar carga horária mínima
+            if (cargaMin < 60) {
+                mostrarErro('A carga horária deve ser de pelo menos 1 hora.');
+                return false;
+            }
+
+            // Validar se o tempo trabalhado não excede a carga horária no primeiro período
+            const tempoTrabalhado = saiAlmMin - entMin;
+            if (tempoTrabalhado > cargaMin) {
+                mostrarErro('O tempo trabalhado no primeiro período não pode exceder a carga horária total.');
+                return false;
+            }
+
+            return true;
+        }
+
+        // Exibir mensagem de erro
+        function mostrarErro(mensagem) {
+            elementos.mensagemErro.textContent = mensagem;
+            elementos.mensagemErro.classList.remove('hidden');
+            elementos.mensagemErro.classList.add('shake');
+            
+            // Remover classe shake após animação
+            setTimeout(() => {
+                elementos.mensagemErro.classList.remove('shake');
+            }, 500);
+
+            // Destacar campos com erro
+            [elementos.entrada, elementos.almocoSai, elementos.almocoVolta, elementos.carga].forEach(input => {
+                input.classList.add('input-error');
+                setTimeout(() => {
+                    input.classList.remove('input-error');
+                }, 2000);
+            });
+        }
+
+        // Ocultar mensagem de erro
+        function ocultarErro() {
+            elementos.mensagemErro.classList.add('hidden');
+        }
+
+        // Calcular horários
+        function calcular() {
+            ocultarErro();
+
+            if (!validarHorarios()) {
+                elementos.resultado.classList.add('hidden');
+                return;
+            }
+
+            // Obter valores
+            const carga = toMinutes(elementos.carga.value);
+            const ent = toMinutes(elementos.entrada.value);
+            const saiAlm = toMinutes(elementos.almocoSai.value);
+            const volAlm = toMinutes(elementos.almocoVolta.value);
+
+            // Cálculos
+            const tempoTrabalhado = saiAlm - ent;
+            const faltaPagar = carga - tempoTrabalhado;
+            const horaSaidaFinal = volAlm + faltaPagar;
+
+            // Validar se a hora de saída não ultrapassa 24h
+            if (horaSaidaFinal >= 24 * 60) {
+                mostrarErro('O horário de saída calculado ultrapassa 24 horas. Verifique os horários informados.');
+                elementos.resultado.classList.add('hidden');
+                return;
+            }
+
+            // Atualizar UI
+            elementos.trabalhado.textContent = toHours(tempoTrabalhado);
+            elementos.falta.textContent = toHours(faltaPagar);
+            elementos.horaSaida.textContent = toHours(horaSaidaFinal);
+
+            // Mostrar resultado com animação
+            elementos.resultado.classList.remove('hidden');
+            elementos.resultado.classList.add('animate-fade-in-up');
+
+            // Rolar suavemente até o resultado para garantir visibilidade
+            elementos.resultado.scrollIntoView({ behavior: 'smooth', block: 'nearest' });
+
+            // Salvar no localStorage
+            salvarDados();
+        }
+
+        // Salvar dados no localStorage
+        function salvarDados() {
+            const dados = {
+                carga: elementos.carga.value,
+                entrada: elementos.entrada.value,
+                almocoSai: elementos.almocoSai.value,
+                almocoVolta: elementos.almocoVolta.value
+            };
+            localStorage.setItem('workflow_dados', JSON.stringify(dados));
+        }
+
+        // Carregar dados do localStorage
+        function carregarDados() {
+            const dadosSalvos = localStorage.getItem('workflow_dados');
+            if (dadosSalvos) {
+                try {
+                    const dados = JSON.parse(dadosSalvos);
+                    if (dados.carga) elementos.carga.value = dados.carga;
+                    if (dados.entrada) elementos.entrada.value = dados.entrada;
+                    if (dados.almocoSai) elementos.almocoSai.value = dados.almocoSai;
+                    if (dados.almocoVolta) elementos.almocoVolta.value = dados.almocoVolta;
+                } catch (e) {
+                    console.error('Erro ao carregar dados salvos:', e);
+                }
+            }
+        }
+
+        // Resetar formulário
+        function resetar() {
+            elementos.carga.value = '08:00';
+            elementos.entrada.value = '07:50';
+            elementos.almocoSai.value = '11:51';
+            elementos.almocoVolta.value = '12:52';
+            elementos.resultado.classList.add('hidden');
+            ocultarErro();
+            localStorage.removeItem('workflow_dados');
+            
+            // Focar no primeiro campo
+            elementos.entrada.focus();
+        }
+
+        // Event Listeners
+        elementos.btnCalcular.addEventListener('click', calcular);
+        elementos.btnResetar.addEventListener('click', resetar);
+
+        // Permitir calcular com Enter em qualquer campo
+        [elementos.carga, elementos.entrada, elementos.almocoSai, elementos.almocoVolta].forEach(input => {
+            input.addEventListener('keypress', (e) => {
+                if (e.key === 'Enter') {
+                    e.preventDefault();
+                    calcular();
+                }
+            });
+
+            // Limpar erro ao digitar
+            input.addEventListener('input', () => {
+                input.classList.remove('input-error');
+                ocultarErro();
+            });
+        });
+
+        // Carregar dados salvos ao iniciar
+        document.addEventListener('DOMContentLoaded', () => {
+            carregarDados();
+        });
+    </script>
+</body>
+</html>
